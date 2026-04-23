@@ -26,22 +26,9 @@ Services with PostgreSQL raw queries (no ORM).
 Getting Started
 1. Prerequisites
 Node.js (v18+)
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
 Docker & Docker Compose
 Clerk, Cloudinary, and Postgres accounts
+
 2. Environment Setup
 Create .env files in both /frontend and /backend directories.
 Backend .env:
