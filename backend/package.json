@@ -5,9 +5,10 @@
   "main": "src/server.ts",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "migrate": "tsx src/db/migrate.ts"
-  },
+  "dev": "tsx watch src/server.ts",
+  "start": "tsx src/server.ts",
+  "migrate": "tsx src/db/migrate.ts"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
