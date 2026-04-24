@@ -5,14 +5,14 @@ import { Category, ThreadSummary } from "@/types/thread";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense,useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Plus, Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 
-function ThreadsHomePage() {
+function ThreadsHomeContent() {
   const { getToken } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -258,4 +258,10 @@ function ThreadsHomePage() {
   );
 }
 
-export default ThreadsHomePage;
+export default function ThreadsHomePage() {
+  return (
+    <Suspense fallback={null}>
+      <ThreadsHomeContent />
+    </Suspense>
+  );
+}
