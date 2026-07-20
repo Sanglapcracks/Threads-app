@@ -203,7 +203,7 @@ function ProfilePage() {
                     </label>
                     <Input
                       id="displayName"
-                      placeholder="Sangam Mukherjee"
+                      placeholder="Sanglap Das"
                       {...form.register("displayName")}
                       disabled={isLoading || isSaving}
                       className="border-border mt-2 bg-background/60 text-sm"
@@ -221,7 +221,7 @@ function ProfilePage() {
                     </label>
                     <Input
                       id="handle"
-                      placeholder="@sangam"
+                      placeholder="@sanglap"
                       {...form.register("handle")}
                       disabled={isLoading || isSaving}
                       className="border-border mt-2 bg-background/60 text-sm"
