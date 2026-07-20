@@ -10,6 +10,7 @@ import { apiGet, createBrowserApiClient } from "@/lib/api-client";
 import { Notification } from "@/types/notification";
 import { useNotificationCount } from "@/hooks/use-notification-count";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,6 +80,12 @@ function Navbar() {
       label: "Chat",
       match: (p?: string | null) => p?.startsWith("chat"),
     },
+    // 👇 Added the thread creation option right here!
+    {
+      href: "/threads/new",
+      label: "Create Thread",
+      match: (p?: string | null) => p?.startsWith("threads/new"),
+    },
     {
       href: "/profile",
       label: "Profile",
@@ -86,18 +93,24 @@ function Navbar() {
     },
   ];
 
-  const renderNavLinks = (item: (typeof navItems)[number]) => {
+const renderNavLinks = (item: (typeof navItems)[number]) => {
+    const isCreateAction = item.label === "Create Thread";
+    
     return (
       <Link
         key={item.href}
         href={item.href}
-        className="flex items-center rounded-full px-3 py-2 text-sm font-medium transition-colors bg-primary/20 text-primary shadow-sm"
+        className={cn(
+          "flex items-center rounded-full px-4 py-2 text-sm font-medium transition-colors shadow-sm",
+          isCreateAction 
+            ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+            : "bg-primary/20 text-primary hover:bg-primary/30"
+        )}
       >
         {item.label}
       </Link>
     );
   };
-
   return (
     <header className="sticky top-0 z-40 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
