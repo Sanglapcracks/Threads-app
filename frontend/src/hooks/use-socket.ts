@@ -30,7 +30,8 @@ export function useSocket(): UseSocketResult {
       return;
     }
 
-    const baseUrl = "http://localhost:5000";
+    // Replace the hardcoded string with this fallback structure:
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
     console.log(`[Socket], ${baseUrl}, ${userId}`);
 
