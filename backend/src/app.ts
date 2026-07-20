@@ -15,7 +15,10 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: ["http://localhost:4000"],
+      origin: ["http://localhost:4000",
+        "https://threads-app-psi-three.vercel.app"
+      ],
+     
       credentials: true,
     })
   );
