@@ -74,6 +74,40 @@ export async function repoUpdateUserProfile(params: {
   if (result.rows.length === 0) {
     throw new Error(`no user found for clerk user id= ${clerkUserId}`);
   }
+  
+
+  return hydrateUser(result.rows[0]);
+}
+export async function upsertUserFromClerkProfile(params: {
+  clerkUserId: string;
+  displayName: string;
+  handle: string;
+  avatarUrl?: string;
+}): Promise<User> {
+  const { clerkUserId, displayName, handle, avatarUrl } = params;
+
+  const result = await query<UserRow>(
+    `
+      INSERT INTO users (clerk_user_id, display_name, handle, avatar_url, updated_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      ON CONFLICT (clerk_user_id) DO UPDATE 
+      SET 
+        display_name = EXCLUDED.display_name,
+        handle = EXCLUDED.handle,
+        avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+        updated_at = NOW()
+      RETURNING
+        id,
+        clerk_user_id,
+        display_name,
+        handle,
+        avatar_url,
+        bio,
+        created_at,
+        updated_at
+    `,
+    [clerkUserId, displayName, handle, avatarUrl || null]
+  );
 
   return hydrateUser(result.rows[0]);
 }
