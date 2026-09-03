@@ -7,10 +7,13 @@ import axios, {
 export function createBrowserApiClient(
   getToken: () => Promise<string | null>
 ): AxiosInstance {
-  const client = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000",
-    withCredentials: false,
-  });
+const client = axios.create({
+  baseURL:
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://threads-app-1k00.onrender.com",
+  withCredentials: false,
+});
 
   client.interceptors.request.use(async (config) => {
     const token = await getToken();

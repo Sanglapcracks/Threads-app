@@ -31,7 +31,10 @@ export function useSocket(): UseSocketResult {
     }
 
     // Replace the hardcoded string with this fallback structure:
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://threads-app-1k00.onrender.com";
 
     console.log(`[Socket], ${baseUrl}, ${userId}`);
 
