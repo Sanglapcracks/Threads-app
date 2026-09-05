@@ -50,7 +50,10 @@ export function initIo(httpServer: HttpServer) {
 
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:4000",
+      origin: [
+  "http://localhost:4000",
+  "https://threads-app-psi-three.vercel.app",
+],
       credentials: true,
     },
   });
@@ -162,6 +165,10 @@ export function initIo(httpServer: HttpServer) {
 
       addOnlineUser(localUserId, socket.id);
       broadcasePresence();
+      socket.on("disconnect", () => {
+        removeOnlineUser(localUserId, socket.id);
+        broadcasePresence();
+      });
     } catch (err) {
       console.log(`[Error while socket connection]------> ${err}`);
       socket.disconnect(true);
