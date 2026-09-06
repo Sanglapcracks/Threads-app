@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   DB_PASSWORD: z.string().default("postgres"),
   CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
+    REDIS_URL: z.string().default("redis://localhost:6380"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

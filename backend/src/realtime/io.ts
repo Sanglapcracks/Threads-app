@@ -1,61 +1,76 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
+import { createClient, type RedisClientType } from "redis";
+import { createAdapter } from "@socket.io/redis-adapter";
 import { getUserFromClerk } from "../modules/users/user.service.js";
 import { createDirectMessage } from "../modules/chat/chat.service.js";
+import { env } from "../config/env.js";
+import { logger } from "../lib/logger.js";
 
 let io: Server | null = null;
+let redisClient: RedisClientType | null = null;
 
-const onlineUsers = new Map<number, Set<string>>();
+const ONLINE_USERS_SET = "online:users";
 
-function addOnlineUser(rawUserId: unknown, socketId: string) {
+function socketsKeyFor(userId: number) {
+  return `online:sockets:${userId}`;
+}
+
+async function addOnlineUser(rawUserId: unknown, socketId: string) {
   const userId = Number(rawUserId);
-  if (!Number.isFinite(userId) || userId <= 0) return;
+  if (!Number.isFinite(userId) || userId <= 0 || !redisClient) return;
 
-  const existing = onlineUsers.get(userId);
+  await redisClient.sAdd(socketsKeyFor(userId), socketId);
+  await redisClient.sAdd(ONLINE_USERS_SET, String(userId));
+}
 
-  if (existing) {
-    existing.add(socketId);
-  } else {
-    onlineUsers.set(userId, new Set([socketId]));
+async function removeOnlineUser(rawUserId: unknown, socketId: string) {
+  const userId = Number(rawUserId);
+  if (!Number.isFinite(userId) || userId <= 0 || !redisClient) return;
+
+  const key = socketsKeyFor(userId);
+  await redisClient.sRem(key, socketId);
+
+  const remaining = await redisClient.sCard(key);
+  if (remaining === 0) {
+    await redisClient.sRem(ONLINE_USERS_SET, String(userId));
   }
 }
 
-function removeOnlineUser(rawUserId: unknown, socketId: string) {
-  const userId = Number(rawUserId);
-  if (!Number.isFinite(userId) || userId <= 0) return;
-
-  const existing = onlineUsers.get(userId);
-
-  if (!existing) return;
-
-  existing.delete(socketId);
-
-  if (existing.size === 0) {
-    onlineUsers.delete(userId);
-  }
+async function getOnlineUserIds(): Promise<number[]> {
+  if (!redisClient) return [];
+  const ids = await redisClient.sMembers(ONLINE_USERS_SET);
+  return ids.map(Number);
 }
 
-function getOnlineUserIds(): number[] {
-  return Array.from(onlineUsers.keys());
+async function broadcasePresence() {
+  const onlineUserIds = await getOnlineUserIds();
+  io?.emit("presence:update", { onlineUserIds });
 }
 
-function broadcasePresence() {
-  io?.emit("presence:update", {
-    onlineUserIds: getOnlineUserIds(),
-  });
-}
-
-export function initIo(httpServer: HttpServer) {
+export async function initIo(httpServer: HttpServer) {
   if (io) return io; //safeguard -> only create once;
+
+  const pubClient = createClient({ url: env.REDIS_URL });
+  const subClient = pubClient.duplicate();
+  redisClient = pubClient.duplicate() as RedisClientType;
+
+  pubClient.on("error", (err) => logger.error(`Redis pubClient error: ${err.message}`));
+  subClient.on("error", (err) => logger.error(`Redis subClient error: ${err.message}`));
+  redisClient.on("error", (err) => logger.error(`Redis client error: ${err.message}`));
+
+  await Promise.all([pubClient.connect(), subClient.connect(), redisClient.connect()]);
+  logger.info("Connected to Redis (pub/sub + presence store)");
 
   io = new Server(httpServer, {
     cors: {
       origin: [
-  "http://localhost:4000",
-  "https://threads-app-psi-three.vercel.app",
-],
+        "http://localhost:4000",
+        "https://threads-app-psi-three.vercel.app",
+      ],
       credentials: true,
     },
+    adapter: createAdapter(pubClient, subClient),
   });
 
   io.on("connection", async (socket) => {
@@ -92,12 +107,9 @@ export function initIo(httpServer: HttpServer) {
         handle,
       };
 
-      //  Join noti room
-
       const notiRoom = `notifications:user:${localUserId}`;
       socket.join(notiRoom);
 
-      // join DM room (create room)
       const dmRoom = `dm:user:${localUserId}`;
       socket.join(dmRoom);
 
@@ -117,7 +129,6 @@ export function initIo(httpServer: HttpServer) {
             return;
           }
 
-          //NO self DM
           if (senderUserId === recipientUserId) {
             return;
           }
@@ -163,17 +174,20 @@ export function initIo(httpServer: HttpServer) {
         });
       });
 
-      addOnlineUser(localUserId, socket.id);
-      broadcasePresence();
-      socket.on("disconnect", () => {
-        removeOnlineUser(localUserId, socket.id);
-        broadcasePresence();
+      await addOnlineUser(localUserId, socket.id);
+      await broadcasePresence();
+
+      socket.on("disconnect", async () => {
+        await removeOnlineUser(localUserId, socket.id);
+        await broadcasePresence();
       });
     } catch (err) {
       console.log(`[Error while socket connection]------> ${err}`);
       socket.disconnect(true);
     }
   });
+
+  return io;
 }
 
 export function getIo() {

@@ -14,7 +14,7 @@ async function boostrap() {
 
     const port = Number(env.PORT) || 5000;
 
-    initIo(server);
+        await initIo(server);
 
     server.listen(port, () => {
       logger.info(`Server is now listening to port: http://localhost:${port}`);

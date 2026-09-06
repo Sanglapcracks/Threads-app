@@ -5,15 +5,16 @@
   "main": "src/server.ts",
   "type": "module",
   "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "start": "tsx src/server.ts",
-  "migrate": "tsx src/db/migrate.ts"
-},
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "migrate": "tsx src/db/migrate.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@clerk/express": "^1.7.53",
+    "@socket.io/redis-adapter": "^8.3.0",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -21,6 +22,7 @@
     "helmet": "^8.1.0",
     "multer": "^2.0.2",
     "pg": "^8.16.3",
+    "redis": "^6.2.1",
     "socket.io": "^4.8.1",
     "tsx": "^4.20.6",
     "winston": "^3.18.3",
