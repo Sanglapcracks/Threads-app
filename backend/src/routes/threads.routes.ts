@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   createdThread,
-  getThreadById,
   listCategories,
   listThreads,
   parseThreadListFilter,

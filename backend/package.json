@@ -5,10 +5,13 @@
   "main": "src/server.ts",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts",
-    "migrate": "tsx src/db/migrate.ts"
-  },
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "migrate": "tsx src/db/migrate.ts",
+  "migrate:prod": "node dist/db/migrate.js",
+  "typecheck": "tsc --noEmit"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
