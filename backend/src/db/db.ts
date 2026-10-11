@@ -1,6 +1,6 @@
-import { Pool, QueryResult, QueryResultRow } from "pg";
-import { env } from "../config/env.js";
-import { logger } from "../lib/logger.js";
+import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { env } from '../config/env.js';
+import { logger } from '../lib/logger.js';
 
 export const pool = new Pool({
   host: env.DB_HOST,
@@ -8,22 +8,20 @@ export const pool = new Pool({
   database: env.DB_NAME,
   user: env.DB_USER,
   password: env.DB_PASSWORD,
-  ssl:true,
+  ssl: env.DB_SSL === 'true',
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ): Promise<QueryResult<T>> {
-  const result = await pool.query<T>(text, params as any[]);
-  return result;
+  return pool.query<T>(text, params as any[]);
 }
 
 export async function assertDatabaseConnection() {
-  try {
-    await pool.query("SELECT 1;");
-    logger.info("Connected to postgres");
-  } catch (err) {
-    throw err;
-  }
+  await pool.query('SELECT 1;');
+  logger.info('Connected to postgres');
 }
