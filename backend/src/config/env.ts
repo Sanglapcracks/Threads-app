@@ -16,6 +16,7 @@ const EnvSchema = z.object({
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
   REDIS_URL: z.string().default('redis://localhost:6380'),
+  RABBITMQ_URL: z.string().default('amqp://guest:guest@localhost:5672'),
   CORS_ORIGINS: z.string().default('http://localhost:4000'),
 });
 
