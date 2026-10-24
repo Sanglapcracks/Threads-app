@@ -5,11 +5,15 @@ import { assertDatabaseConnection, pool } from './db/db.js';
 import { logger } from './lib/logger.js';
 import { connectRedis, redis } from './lib/redis.js';
 import { initIo } from './realtime/io.js';
+import { connectRabbit } from './lib/rabbit.js';
 
 async function bootstrap() {
   try {
     await assertDatabaseConnection();
     await connectRedis();
+        connectRabbit().catch((e) =>
+      logger.error(`RabbitMQ unavailable: ${(e as Error).message}`)
+    );
 
     const app = createApp();
     const server = http.createServer(app);
