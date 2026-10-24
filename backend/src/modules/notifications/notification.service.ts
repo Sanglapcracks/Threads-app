@@ -2,9 +2,10 @@ import { query } from '../../db/db.js';
 import { getIo } from '../../realtime/io.js';
 import { mapNotificationsRow, NotificationRow } from './notifications.types.js';
 
-type NotificationType = 'REPLY_ON_THREAD' | 'LIKE_ON_THREAD';
+export type NotificationType = 'REPLY_ON_THREAD' | 'LIKE_ON_THREAD';
 
-async function createNotification(
+// Database work only: creates the row and returns what should be sent.
+export async function insertNotification(
   type: NotificationType,
   threadId: number,
   actorUserId: number
@@ -15,10 +16,10 @@ async function createNotification(
   );
 
   const row = threadRes.rows[0];
-  if (!row) return;
+  if (!row) return null;
 
   const authorUserId = row.author_user_id;
-  if (authorUserId === actorUserId) return;
+  if (authorUserId === actorUserId) return null;
 
   const insertSql =
     type === 'LIKE_ON_THREAD'
@@ -39,7 +40,7 @@ async function createNotification(
   ]);
 
   const notiRow = insertRes.rows[0];
-  if (!notiRow) return; // duplicate like: nothing to send
+  if (!notiRow) return null; // duplicate like: nothing to send
 
   const fullRes = await query<NotificationRow>(
     `SELECT
@@ -60,13 +61,26 @@ async function createNotification(
   );
 
   const fullRow = fullRes.rows[0];
-  if (!fullRow) return;
+  if (!fullRow) return null;
 
-  const payload = mapNotificationsRow(fullRow);
+  return {
+    recipientUserId: authorUserId,
+    payload: mapNotificationsRow(fullRow),
+  };
+}
+
+// Current behaviour, used by the routes until Step 15: insert, then emit directly.
+async function createNotification(
+  type: NotificationType,
+  threadId: number,
+  actorUserId: number
+) {
+  const result = await insertNotification(type, threadId, actorUserId);
+  if (!result) return;
 
   getIo()
-    ?.to(`notifications:user:${authorUserId}`)
-    .emit('notification:new', payload);
+    ?.to(`notifications:user:${result.recipientUserId}`)
+    .emit('notification:new', result.payload);
 }
 
 export function createReplyNotification(params: {
