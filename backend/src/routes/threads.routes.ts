@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   createdThread,
-  getThreadById,
   listCategories,
   listThreads,
   parseThreadListFilter,
@@ -19,10 +18,8 @@ import {
   listRepliesForThread,
   removeThreadOnce,
 } from "../modules/threads/replies.repository.js";
-import {
-  createLikeNotification,
-  createReplyNotification,
-} from "../modules/notifications/notification.service.js";
+import { publishEvent } from "../lib/rabbit.js";
+import { logger } from "../lib/logger.js";
 
 export const threadsRouter = Router();
 
@@ -154,12 +151,15 @@ threadsRouter.post("/threads/:threadId/replies", async (req, res, next) => {
       body: bodyRaw,
     });
 
-    // notification -> trigger here but later
-
-    await createReplyNotification({
+        // notification is created by the worker, not in this request
+    publishEvent("thread.replied", {
+      type: "thread.replied",
       threadId,
       actorUserId: profile.user.id,
-    });
+      replyId: reply.id,
+    }).catch((e) =>
+      logger.error(`Publish failed: ${(e as Error).message}`)
+    );
 
     res.status(201).json({ data: reply });
   } catch (err) {
@@ -213,12 +213,14 @@ threadsRouter.post("/threads/:threadId/like", async (req, res, next) => {
       userId: profile.user.id,
     });
 
-    //  notifications -> logic but later
-
-    await createLikeNotification({
+        // notification is created by the worker, not in this request
+    publishEvent("thread.liked", {
+      type: "thread.liked",
       threadId,
       actorUserId: profile.user.id,
-    });
+    }).catch((e) =>
+      logger.error(`Publish failed: ${(e as Error).message}`)
+    );
 
     res.status(204).send();
   } catch (err) {

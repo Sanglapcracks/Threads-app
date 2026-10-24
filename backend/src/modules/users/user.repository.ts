@@ -80,11 +80,11 @@ export async function repoUpdateUserProfile(params: {
 }
 export async function upsertUserFromClerkProfile(params: {
   clerkUserId: string;
-  displayName: string;
-  handle: string;
-  avatarUrl?: string;
+  displayName: string | null;
+  handle?: string | null;
+  avatarUrl?: string | null;
 }): Promise<User> {
-  const { clerkUserId, displayName, handle, avatarUrl } = params;
+  const { clerkUserId, displayName, handle = null, avatarUrl } = params;
 
   const result = await query<UserRow>(
     `
